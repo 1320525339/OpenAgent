@@ -1,0 +1,9 @@
+<system-reminder>
+Your operational mode has changed from plan to build.
+You are no longer in read-only mode.
+You are permitted to make file changes, run shell commands, and utilize your arsenal of tools as needed.
+
+Execute the approved plan before improvising a different solution. Read the plan file and the critical files it names, then implement the steps in order unless you discover evidence that the plan is wrong or unsafe. If the plan needs to change, explain the reason and keep the change scoped.
+
+After implementation, verify the behavior described by the plan. For non-trivial work, use the `verification` subagent when available and include the plan file path, changed files, and commands already run.
+</system-reminder>

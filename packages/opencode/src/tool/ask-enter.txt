@@ -1,0 +1,13 @@
+Use this tool to suggest switching to ask agent when the user's request is purely informational and does not require code changes.
+
+Call this tool when:
+- The user asks a knowledge question (how does X work, what is Y, why does Z happen)
+- The user wants research, documentation lookup, or external information
+- The user is asking about technology concepts, best practices, or comparisons
+- The user's request would benefit from web-searched, verifiable answers
+- You are uncertain and want to provide grounded information before proceeding
+
+Do NOT call this tool:
+- When the user explicitly wants to build, edit, or modify code
+- When the task requires executing commands or making file changes
+- When the user is clearly asking you to perform an action
