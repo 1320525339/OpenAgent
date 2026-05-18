@@ -148,7 +148,7 @@ export const layer = Layer.effect(
         const agents: Record<string, Info> = {
           build: {
             name: "build",
-            description: "The default agent. Executes tools based on configured permissions.",
+            description: "默认代理。根据当前配置的权限执行工具和任务。",
             options: {},
             permission: Permission.merge(
               defaults,
@@ -175,7 +175,7 @@ export const layer = Layer.effect(
           },
           ask: {
             name: "ask",
-            description: "Ask mode. Answers with grounded, verifiable information and does not modify files.",
+            description: "问答模式。提供有依据、可验证的答案，不修改文件。",
             options: {
               omitInstructions: true,
             },
@@ -200,7 +200,7 @@ export const layer = Layer.effect(
           },
           plan: {
             name: "plan",
-            description: "Plan mode. Disallows all edit tools.",
+            description: "规划模式。禁止所有编辑类工具，只负责分析和制定计划。",
             options: {},
             permission: Permission.merge(
               defaults,
@@ -224,7 +224,7 @@ export const layer = Layer.effect(
           },
           general: {
             name: "general",
-            description: `General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel.`,
+            description: `通用子代理。适合研究复杂问题和执行多步骤任务，也适合并行处理多个独立工作单元。`,
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
@@ -240,7 +240,7 @@ export const layer = Layer.effect(
           verification: {
             name: "verification",
             description:
-              "Read-only verification specialist. Use after non-trivial implementation work to run builds, tests, runtime checks, and adversarial probes before reporting completion.",
+              "只读验证子代理。用于在报告完成前运行构建、测试、运行时检查和对抗性验证。",
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
@@ -268,7 +268,7 @@ export const layer = Layer.effect(
           debug: {
             name: "debug",
             description:
-              "Bug-fix specialist. Reproduces failures, bootstraps scoped instrumentation, isolates root causes, applies minimal patches, and verifies the fix.",
+              "Bug 修复专用代理。负责调查项目缺陷、定位根因、应用最小补丁并验证修复结果。",
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
@@ -328,7 +328,7 @@ export const layer = Layer.effect(
               }),
               user,
             ),
-            description: `Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.`,
+            description: `快速代码探索子代理。适合按模式查找文件（如 "src/components/**/*.tsx"）、按关键词搜索代码（如 "API endpoints"），或回答代码库相关问题（如“API 端点是如何工作的”）。调用时请明确探索深度："quick" 表示基础搜索，"medium" 表示中等深度，"very thorough" 表示跨多个位置和命名方式的全面分析。`,
             prompt: PROMPT_EXPLORE,
             options: {
               omitInstructions: true,
@@ -359,7 +359,7 @@ export const layer = Layer.effect(
                     }),
                     user,
                   ),
-                  description: `Docs and dependency-source specialist. Use this when you need to inspect external documentation, clone dependency repositories into the managed cache, and research library implementation details without modifying the user's workspace.`,
+                  description: `文档与依赖源码研究子代理。适合在不修改用户工作区的前提下查看外部文档、将依赖仓库克隆到托管缓存，并研究库的实现细节。`,
                   prompt: PROMPT_SCOUT,
                   options: {
                     omitInstructions: true,
@@ -373,7 +373,7 @@ export const layer = Layer.effect(
           debug_investigator: {
             name: "debug_investigator",
             description:
-              "Read-only subagent for bug investigation. Focuses on reproducing failures, tracing call paths, and collecting evidence without editing files.",
+              "只读缺陷调查子代理。负责复现问题、追踪代码路径并收集证据，不编辑文件。",
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
@@ -404,7 +404,7 @@ export const layer = Layer.effect(
           debug_qa: {
             name: "debug_qa",
             description:
-              "Verification subagent for bug fixes. Re-runs reproductions, validates adjacent flows, and reports residual risk without broad code changes.",
+              "Bug 修复验证子代理。负责重跑复现步骤、检查相邻流程，并在不进行大范围改动的前提下报告剩余风险。",
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({

@@ -1,8 +1,49 @@
 - To regenerate the JavaScript SDK, run `./packages/sdk/js/script/build.ts`.
+- To regenerate SDK + OpenAPI spec + format, run `./script/generate.ts`.
 - ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
 - The default branch in this repo is `dev`.
 - Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
 - Prefer automation: execute requested actions without confirmation unless blocked by missing info or safety/irreversibility.
+
+## Repo overview
+
+Bun monorepo (bun@1.3.13) managed with Turborepo. Key packages:
+
+- `packages/opencode` — core CLI, server, TUI, business logic
+- `packages/app` — web UI (SolidJS + Vite)
+- `packages/desktop` — Electron desktop app (wraps `packages/app`)
+- `packages/llm` — Effect Schema-first LLM provider/route layer
+- `packages/core` — shared core utilities
+- `packages/sdk/js` — generated JavaScript SDK
+- `packages/ui` — shared UI components
+- `packages/plugin` — `@opencode-ai/plugin` source
+
+## Commands
+
+| Task | Command | Notes |
+|------|---------|-------|
+| Install | `bun install` | from repo root |
+| Dev (TUI) | `bun dev` | from root; runs in `packages/opencode` |
+| Dev (web) | `bun dev web` | starts server + opens web UI |
+| Dev (server) | `bun dev serve` | headless API on port 4096 |
+| Typecheck (all) | `bun typecheck` | runs `turbo typecheck` across all packages |
+| Typecheck (pkg) | `bun typecheck` | from a package dir; uses `tsgo --noEmit` |
+| Lint | `bun lint` | runs `oxlint` from root |
+| Test (CI) | `bun turbo test:ci` | all packages, JUnit output |
+| Test (pkg) | `bun test` | from a package dir |
+| Test (single) | `bun test path/to/file.test.ts` | from a package dir |
+| DB migration | `bun run db generate --name <slug>` | from `packages/opencode` |
+| SDK generate | `./script/generate.ts` | regenerates SDK, OpenAPI, formats |
+| Build exe | `./packages/opencode/script/build.ts --single` | standalone binary |
+
+**Never run tests from repo root** — `bunfig.toml` guards against it (`root = "./do-not-run-tests-from-root"`).
+
+## Git & CI
+
+- Pre-push hook runs `bun typecheck`; ensure it passes before pushing.
+- CI runs `bun turbo test:ci` (Linux + Windows) and `bun typecheck`.
+- PR titles follow conventional commits: `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`. Optionally scope: `feat(app):`, `fix(desktop):`.
+- All PRs must reference an existing issue (`Fixes #123`).
 
 ## Style Guide
 
@@ -121,7 +162,36 @@ const table = sqliteTable("session", {
 - Avoid mocks as much as possible
 - Test actual implementation, do not duplicate logic into tests
 - Tests cannot run from repo root (guard: `do-not-run-tests-from-root`); run from package dirs like `packages/opencode`.
+- Use `bun test --timeout 30000` from package dirs (matches CI).
+- Effect tests use `testEffect(...)` from `test/lib/effect.ts`; see `packages/opencode/test/AGENTS.md` for fixtures and patterns.
+- LLM provider tests are fixture-first; live calls require `RECORD=true` and API keys. See `packages/llm/AGENTS.md`.
+- Use `pollWithTimeout` / `awaitWithTimeout` for async synchronization in tests; never use `Effect.sleep` as a "wait for readiness" hack.
 
 ## Type Checking
 
 - Always run `bun typecheck` from package directories (e.g., `packages/opencode`), never `tsc` directly.
+- Typecheck uses `tsgo` (TypeScript native preview), not `tsc`.
+
+## Effect
+
+See `packages/opencode/AGENTS.md` for full Effect conventions, module shape, `InstanceState`, and service patterns.
+
+Key rules:
+- Use `Effect.gen(function* () { ... })` for composition.
+- Use `Effect.fn("Domain.method")` for named/traced effects.
+- Prefer `FileSystem`, `ChildProcessSpawner`, `HttpClient`, `Path`, `Config`, `Clock` over raw platform APIs inside Effect code.
+- Use `makeRuntime` (from `src/effect/run-service.ts`) for services; use `InstanceState` for per-directory state with scoped cleanup.
+- Do not use `export namespace Foo { ... }` — use flat exports with `export * as Foo from "./foo"` self-reexport.
+
+## LLM Package
+
+See `packages/llm/AGENTS.md` for route/protocol architecture, provider definitions, tool runtime, and recording test patterns.
+
+## Desktop
+
+- Renderer process should only call `window.api` from `src/preload`.
+- Main process should register IPC handlers in `src/main/ipc.ts`.
+
+## Formatter
+
+- Prettier: `semi: false`, `printWidth: 120`.

@@ -1,9 +1,9 @@
 <system-reminder>
-Your operational mode has changed from plan to build.
-You are no longer in read-only mode.
-You are permitted to make file changes, run shell commands, and utilize your arsenal of tools as needed.
+你的操作模式已从计划切换到构建。
+你不再处于只读模式。
+你可以进行文件修改、运行 shell 命令以及根据需要运用你的工具库。
 
-Execute the approved plan before improvising a different solution. Read the plan file and the critical files it names, then implement the steps in order unless you discover evidence that the plan is wrong or unsafe. If the plan needs to change, explain the reason and keep the change scoped.
+在执行不同的解决方案之前，先执行已批准的计划。阅读计划文件及其命名的关键文件，然后按顺序实施步骤，除非你发现计划有误或存在安全隐患。如果计划需要更改，说明原因并保持修改范围有限。
 
-After implementation, verify the behavior described by the plan. For non-trivial work, use the `verification` subagent when available and include the plan file path, changed files, and commands already run.
+实施后，验证计划所描述的行为。对于非平凡的工作，在可用时使用 `verification` 子代理，并包含计划文件路径、修改后的文件和已运行的命令。
 </system-reminder>

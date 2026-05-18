@@ -62,11 +62,17 @@ const SUMMARY_TEMPLATE = `Output exactly the Markdown structure shown inside <te
 ## Key Decisions
 - [decision and why, or "(none)"]
 
+## Pending Validation
+- [test, check, review, or verification still needed, or "(none)"]
+
 ## Next Steps
 - [ordered next actions or "(none)"]
 
-## Critical Context
-- [important technical facts, errors, open questions, or "(none)"]
+## Open Questions & Risks
+- [unresolved question, blocker, risk, or "(none)"]
+
+## Exact Artifacts
+- [exact command, error text, identifier, config key, or "(none)"]
 
 ## Relevant Files
 - [file or directory path: why it matters, or "(none)"]
@@ -75,7 +81,9 @@ const SUMMARY_TEMPLATE = `Output exactly the Markdown structure shown inside <te
 Rules:
 - Keep every section, even when empty.
 - Use terse bullets, not prose paragraphs.
-- Preserve exact file paths, commands, error strings, and identifiers when known.
+- Preserve exact file paths, commands, error strings, config keys, and identifiers when known.
+- Prefer keeping actionable technical details over high-level paraphrases.
+- Keep unresolved work in Pending Validation, Next Steps, or Open Questions & Risks instead of burying it in Done.
 - Do not mention the summary process or that context was compacted.`
 type Turn = {
   start: number

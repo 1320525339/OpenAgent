@@ -5,7 +5,7 @@ import { getDirectory, getFilename } from "@opencode-ai/core/util/path"
 
 export type AtOption =
   | { type: "agent"; name: string; display: string }
-  | { type: "file"; path: string; display: string; recent?: boolean }
+  | { type: "file"; path: string; display: string; recent?: boolean; changed?: boolean; diffStatus?: "added" | "deleted" | "modified" }
 
 export interface SlashCommand {
   id: string
@@ -72,6 +72,14 @@ export const PromptPopover: Component<PromptPopoverProps> = (props) => {
                   const isDirectory = item.path.endsWith("/")
                   const directory = isDirectory ? item.path : getDirectory(item.path)
                   const filename = isDirectory ? "" : getFilename(item.path)
+                  const statusLabel =
+                    item.diffStatus === "added" ? "A" : item.diffStatus === "deleted" ? "D" : item.diffStatus === "modified" ? "M" : undefined
+                  const statusColor =
+                    item.diffStatus === "added"
+                      ? "text-text-success"
+                      : item.diffStatus === "deleted"
+                        ? "text-text-error"
+                        : "text-text-warning"
 
                   return (
                     <button
@@ -80,7 +88,14 @@ export const PromptPopover: Component<PromptPopoverProps> = (props) => {
                       onClick={() => props.onAtSelect(item)}
                       onMouseEnter={() => props.setAtActive(key)}
                     >
-                      <FileIcon node={{ path: item.path, type: "file" }} class="shrink-0 size-4" />
+                      <Show
+                        when={statusLabel}
+                        fallback={<FileIcon node={{ path: item.path, type: "file" }} class="shrink-0 size-4" />}
+                      >
+                        <span class={`shrink-0 size-4 flex items-center justify-center text-11-bold ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </Show>
                       <div class="flex items-center text-14-regular min-w-0">
                         <span class="text-text-weak whitespace-nowrap truncate min-w-0">{directory}</span>
                         <Show when={!isDirectory}>

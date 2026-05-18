@@ -117,6 +117,36 @@ export function setCursorPosition(parent: HTMLElement, position: number) {
   fallbackSelection?.addRange(fallbackRange)
 }
 
+export function insertGhost(editor: HTMLElement, text: string, filePath: string) {
+  const ghost = document.createElement("span")
+  ghost.setAttribute("data-ghost", "true")
+  ghost.setAttribute("data-ghost-path", filePath)
+  ghost.setAttribute("contenteditable", "false")
+  ghost.textContent = text
+  ghost.style.cssText = "color: var(--text-weak); opacity: 0.4; pointer-events: none;"
+
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) return
+  const range = selection.getRangeAt(0)
+  if (!editor.contains(range.startContainer)) return
+
+  range.insertNode(ghost)
+  range.setStartBefore(ghost)
+  range.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(range)
+}
+
+export function removeGhost() {
+  const existing = document.querySelector("[data-ghost]")
+  existing?.remove()
+}
+
+export function getGhostPath(): string | null {
+  const ghost = document.querySelector("[data-ghost]")
+  return ghost?.getAttribute("data-ghost-path") ?? null
+}
+
 export function setRangeEdge(parent: HTMLElement, range: Range, edge: "start" | "end", offset: number) {
   let remaining = offset
   const nodes = Array.from(parent.childNodes)

@@ -35,7 +35,7 @@ import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
 import { useSessionLayout } from "@/pages/session/session-layout"
 import { createSessionTabs } from "@/pages/session/helpers"
-import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge } from "./prompt-input/editor-dom"
+import { createTextFragment, getCursorPosition, setCursorPosition, setRangeEdge, insertGhost, removeGhost, getGhostPath } from "./prompt-input/editor-dom"
 import { createPromptAttachments } from "./prompt-input/attachments"
 import { ACCEPTED_FILE_TYPES } from "./prompt-input/files"
 import {
@@ -538,6 +538,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const handleBlur = () => {
     closePopover()
+    removeGhost()
     setComposing(false)
   }
 
@@ -559,6 +560,22 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       .map((agent): AtOption => ({ type: "agent", name: agent.name, display: agent.name })),
   )
   const agentNames = createMemo(() => local.agent.list().map((agent) => agent.name))
+
+  const changedFiles = createMemo((): AtOption[] => {
+    const sessionID = params.id
+    if (!sessionID) return []
+    const diffs = sync.data.session_diff[sessionID]
+    if (!diffs) return []
+    return diffs
+      .filter((d) => d.file && !d.file.startsWith(".git/"))
+      .map((d): AtOption => ({
+        type: "file" as const,
+        path: d.file!,
+        display: d.file!.split("/").pop() ?? d.file!,
+        changed: true as const,
+        diffStatus: d.status as "added" | "deleted" | "modified",
+      }))
+  })
 
   const handleAtSelect = (option: AtOption | undefined) => {
     if (!option) return
@@ -583,28 +600,31 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   } = useFilteredList<AtOption>({
     items: async (query) => {
       const agents = agentList()
+      const changed = changedFiles()
       const open = recent()
       const seen = new Set(open)
       const pinned: AtOption[] = open.map((path) => ({ type: "file", path, display: path, recent: true }))
-      if (!query.trim()) return [...agents, ...pinned]
+      if (!query.trim()) return [...agents, ...changed, ...pinned]
       const paths = await files.searchFilesAndDirectories(query)
       const fileOptions: AtOption[] = paths
         .filter((path) => !seen.has(path))
         .map((path) => ({ type: "file", path, display: path }))
-      return [...agents, ...pinned, ...fileOptions]
+      return [...agents, ...changed, ...pinned, ...fileOptions]
     },
     key: atKey,
     filterKeys: ["display"],
     groupBy: (item) => {
       if (item.type === "agent") return "agent"
+      if (item.changed) return "changed"
       if (item.recent) return "recent"
       return "file"
     },
     sortGroupsBy: (a, b) => {
       const rank = (category: string) => {
         if (category === "agent") return 0
-        if (category === "recent") return 1
-        return 2
+        if (category === "changed") return 1
+        if (category === "recent") return 2
+        return 3
       }
       return rank(a.category) - rank(b.category)
     },
@@ -670,11 +690,21 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     const pill = document.createElement("span")
     pill.textContent = part.content
     pill.setAttribute("data-type", part.type)
-    if (part.type === "file") pill.setAttribute("data-path", part.path)
+    if (part.type === "file") {
+      pill.setAttribute("data-path", part.path)
+      pill.title = `打开 ${part.path}`
+      pill.style.cursor = "pointer"
+      pill.addEventListener("click", (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const tab = files.tab(part.path)
+        void tabs().open(tab)
+        tabs().setActive(tab)
+      })
+    }
     if (part.type === "agent") pill.setAttribute("data-name", part.name)
     pill.setAttribute("contenteditable", "false")
     pill.style.userSelect = "text"
-    pill.style.cursor = "default"
     return pill
   }
 
@@ -890,6 +920,28 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       }
     } else {
       closePopover()
+    }
+
+    removeGhost()
+    if (!shellMode && !store.popover) {
+      const wordMatch = rawText.substring(0, cursorPosition).match(/(\S+)$/)
+      if (wordMatch && wordMatch[1].length >= 2) {
+        const word = wordMatch[1].toLowerCase()
+        const changed = changedFiles()
+        const match = changed.find((f) => {
+          if (f.type !== "file") return false
+          const name = f.display.toLowerCase()
+          return name !== word && name.includes(word)
+        })
+        if (match && match.type === "file") {
+          const nameLower = match.display.toLowerCase()
+          const idx = nameLower.indexOf(word)
+          const ghostText = match.display.substring(idx + word.length)
+          if (ghostText) {
+            insertGhost(editorRef, ghostText, match.path)
+          }
+        }
+      }
     }
 
     resetHistoryNavigation()
@@ -1174,6 +1226,16 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
 
     const ctrl = event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+
+    if (event.key === "Tab" && !store.popover) {
+      const ghostPath = getGhostPath()
+      if (ghostPath) {
+        event.preventDefault()
+        removeGhost()
+        addPart({ type: "file", path: ghostPath, content: "@" + ghostPath, start: 0, end: 0 })
+        return
+      }
+    }
 
     if (store.popover) {
       if (event.key === "Tab") {
